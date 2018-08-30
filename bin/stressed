@@ -1,0 +1,22 @@
+#!/bin/sh -e
+
+VERSION=$(echo `[ -f VERSION ] && head -n 1 VERSION || head -n 1 MAJOR_VERSION` | tr -d '\n')
+
+STRESSED_USER_AGENT=stressed!/${VERSION}
+STRESSED_CONCURRENCY=${STRESSED_CONCURRENCY:-1}
+STRESSED_TIMES=${STRESSED_TIMES:-1}
+
+echo "Stressed! v${VERSION} started for ${STRESSED_CW_METRIC_NAMESPACE}"
+echo "Running ${STRESSED_CONCURRENCY} simultaneous requests for a total of ${STRESSED_TIMES} times."
+
+RESULT=$(mobbage -a "$STRESSED_USER_AGENT" -w $STRESSED_CONCURRENCY -n $STRESSED_TIMES -j -r -f /data/urls.json)
+CW_JSON_OUTPUT='[{MetricName:"AvgResponseTime",Value:.avg_ms,Unit:"Milliseconds"},{MetricName:"MaxResponseTime",Value:.max_ms,Unit:"Milliseconds"},{MetricName:"Availability",Value:.avail,Unit:"Percent"}]'
+CW_RESULT=$(echo $RESULT | jq -c -M $CW_JSON_OUTPUT)
+CW_CMD="aws cloudwatch put-metric-data --namespace $STRESSED_CW_METRIC_NAMESPACE --metric-data '$CW_RESULT'"
+
+echo "Results: `echo ${RESULT} \| jq`"
+
+echo "Sending results to CW: ${CW_RESULT}"
+eval $CW_CMD
+
+echo "Done."

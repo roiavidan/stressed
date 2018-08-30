@@ -1,0 +1,8 @@
+[
+  {
+    "url": "http://example.com",
+    "method": "POST",
+    "headers": ["api-key:secret", "content-type:application/json", "x-roi:avidan"],
+    "data": "{\"customerId\":\"1234\",\"productId\":\"my-prod\",\"attributes\":{\"country\":\"AU\"},\"quantity\":1}"
+  }
+]
